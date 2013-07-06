@@ -1,6 +1,6 @@
-# Settings Gem/Plugin for Rails
+# settings-in-redis
 
-[![Build Status](https://secure.travis-ci.org/ledermann/rails-settings.png)](http://travis-ci.org/ledermann/rails-settings)
+# UNDER CONSTRUCTION
 
 Settings is a gem/plugin that makes managing a table of key/value pairs easy. Think of it like a Hash stored in you database, that uses simple ActiveRecord like methods for manipulation. Keep track of any setting that you don't want to hard code into your rails app. You can store any kind of object: Strings, numbers, arrays, or any object which can be noted as YAML.
 

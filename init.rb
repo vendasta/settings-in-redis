@@ -1,1 +1,1 @@
-require 'rails-settings'
+require 'settings-in-redis'

@@ -1,0 +1,5 @@
+require 'settings-in-redis/version'
+require 'settings-in-redis/null_store'
+require 'settings-in-redis/active_record'
+require 'settings-in-redis/settings'
+require 'settings-in-redis/scoped_settings'
