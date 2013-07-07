@@ -1,34 +1,71 @@
-class Settings < ActiveRecord::Base
-  class SettingNotFound < RuntimeError; end
-  
-  cattr_accessor :defaults
-  self.defaults = {}.with_indifferent_access
+require 'redis'
+require 'active_support/core_ext/hash/indifferent_access'
+require 'yaml'
+
+module Settings
+  class NoRedisConnection < RuntimeError; end
+
+  def self.redis=(server)
+    @redis = server
+  end
+
+  def self.redis
+    raise NoRedisConnection unless @redis
+    @redis
+  end
+  private_class_method :redis
+
+  def self.defaults=(value)
+    @defaults = value
+  end
+
+  def self.defaults
+    @defaults ||= HashWithIndifferentAccess.new
+  end
 
   # cache must follow the contract of ActiveSupport::Cache. Defaults to no-op.
-  cattr_accessor :cache
-  self.cache = ActiveSupport::Cache::NullStore.new
+  def self.cache=(value)
+    @cache = value
+  end
 
-  # options passed to cache.fetch() and cache.write(). example: {:expires_in => 5.minutes}
-  cattr_accessor :cache_options
-  self.cache_options = {}
+  def self.cache
+    @cache || ActiveSupport::Cache::NullStore.new
+  end
+
+  # options passed to cache.fetch() and cache.write().
+  # Example: {:expires_in => 5.minutes}
+  def self.cache_options=(value)
+    @cache_options = value
+  end
+
+  def self.cache_options
+    @cache_options || {}
+  end
+
+  def self.cache_prefix
+    @cache_prefix || 'Settings'
+  end
 
   def self.cache_key(var_name)
-    [target_id, target_type, var_name].compact.join("::")
+    "#{cache_prefix}::#{var_name}"
   end
 
-  # Support old plugin
-  if defined?(SettingsDefaults::DEFAULTS)
-    self.defaults = SettingsDefaults::DEFAULTS.with_indifferent_access
+  def self.redis_prefix
+    @redis_prefix || 'settings'
+  end
+
+  def self.redis_key(var_name)
+    "#{redis_prefix}:#{var_name}"
   end
   
-  #get or set a variable with the variable as the called method
+  # get or set a variable with the variable as the called method
   def self.method_missing(method, *args)
     if self.respond_to?(method)
       super
     else
       method_name = method.to_s
     
-      #set a value for a variable
+      # set a value for a variable
       if method_name =~ /=$/
         var_name = method_name.gsub('=', '')
         value = args.first
@@ -37,60 +74,60 @@ class Settings < ActiveRecord::Base
       #retrieve a value
       else
         self[method_name]
-      
       end
     end
   end
   
-  #destroy the specified settings record
+  # destroy the specified setting
   def self.destroy(var_name)
     var_name = var_name.to_s
-    begin
-      target(var_name).destroy
-      cache.delete(cache_key(var_name))
-      true
-    rescue NoMethodError
-      raise SettingNotFound, "Setting variable \"#{var_name}\" not found"
-    end
+    redis.del(redis_key(var_name))
+    cache.delete(cache_key(var_name))
   end
 
-  def self.delete_all(conditions = nil)
+  def self.delete_all
     cache.clear
-    super
+    all_keys = redis.keys("#{redis_prefix}:*")
+    redis.del(all_keys) if all_keys.any?
   end
 
-  #retrieve all settings as a hash (optionally starting with a given namespace)
-  def self.all(starting_with=nil)
-    options = starting_with ? { :conditions => "var LIKE '#{starting_with}%'"} : {}
-    vars = target_scoped.find(:all, {:select => 'var, value'}.merge(options))
-    
-    result = {}
-    vars.each do |record|
-      result[record.var] = record.value
+  # retrieve all settings as a hash
+  # (optionally starting with a given namespace)
+  def self.all(starting_with = nil)
+    pattern = ["#{redis_prefix}:", starting_with, '*'].compact.join('')
+    all_keys = redis.keys(pattern)
+    if all_keys.any?
+      values = redis.mget(all_keys).map { |v| deserialize(v) }
+      prefix = Regexp.new("^#{redis_prefix}:")
+      setting_names = all_keys.map { |k| k.gsub(prefix, '')}
+      result = Hash[setting_names.zip(values)]
+      result.with_indifferent_access
+    else
+      HashWithIndifferentAccess.new
     end
-    result.with_indifferent_access
   end
   
-  #get a setting value by [] notation
+  # get a setting value by [] notation
   def self.[](var_name)
     cache.fetch(cache_key(var_name), cache_options) do
-      if (var = target(var_name)).present?
-        var.value
+      value = redis.get(redis_key(var_name))
+      if value.present?
+        deserialize(value)
       else
         defaults[var_name.to_s]
       end
     end
   end
   
-  #set a setting value by [] notation
+  # set a setting value by [] notation
   def self.[]=(var_name, value)
-    record = target_scoped.find_or_initialize_by_var(var_name.to_s)
-    record.value = value
-    record.save!
+    redis.set(redis_key(var_name), serialize(value))
     cache.write(cache_key(var_name), value, cache_options)
     value
   end
-  
+
+  # Merge the specified Hash into the an existing setting with a Hash value.
+  # @return [Hash]
   def self.merge!(var_name, hash_value)
     raise ArgumentError unless hash_value.is_a?(Hash)
     
@@ -103,34 +140,15 @@ class Settings < ActiveRecord::Base
     new_value
   end
 
-  def self.target(var_name)
-    target_scoped.find_by_var(var_name.to_s)
+  # decode YAML value
+  def self.deserialize(value)
+    YAML::load(value)
   end
+  private_class_method :deserialize
   
-  #get the value field, YAML decoded
-  def value
-    YAML::load(self[:value])
+  # YAML encode value
+  def self.serialize(value)
+    value.to_yaml
   end
-  
-  #set the value field, YAML encoded
-  def value=(new_value)
-    self[:value] = new_value.to_yaml
-  end
-  
-  def self.target_scoped
-    Settings.scoped_by_target_type_and_target_id(target_type, target_id)
-  end
-  
-  #Deprecated!
-  def self.reload # :nodoc:
-    self
-  end
-  
-  def self.target_id
-    nil
-  end
-
-  def self.target_type
-    nil
-  end
+  private_class_method :serialize
 end

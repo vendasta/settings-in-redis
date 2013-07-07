@@ -1,6 +1,9 @@
+require 'active_support/cache'
+
 unless defined?(ActiveSupport::Cache::NullStore)
   # Copied from Rails 3
   # https://github.com/rails/rails/blob/master/activesupport/lib/active_support/cache/null_store.rb
+  # NullStore was added in 3.2.1
   module ActiveSupport
     module Cache
       # A cache store implementation which doesn't actually store anything. Useful in
