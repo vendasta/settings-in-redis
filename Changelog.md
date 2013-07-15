@@ -1,3 +1,6 @@
+
+### History of ledermann-rails-settings
+
 Version 1.1.0 (2012-06-01)
 
 - Added caching (thanks to Matthew McEachen)

@@ -1,11 +1,10 @@
-require 'rake/testtask'
+require 'bundler/gem_tasks'
 
-Rake::TestTask.new do |t|
-  t.libs << 'lib' << 'test'
-  t.test_files = Dir.glob("test/**/*_test.rb")
-  t.verbose = true
+require 'rspec/core'
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new(:spec) do |spec|
+  spec.pattern = FileList['spec/**/*_spec.rb']
 end
 
-task :default => :test
+task :default => :spec
 
-require 'bundler/gem_tasks'
