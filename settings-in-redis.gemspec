@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
 
   s.add_runtime_dependency 'redis'
-  s.add_runtime_dependency 'activesupport', '~> 3.1.12'
+  s.add_runtime_dependency 'activesupport'
   s.add_runtime_dependency 'i18n' # required by activesupport
 
   s.add_development_dependency 'rake'
