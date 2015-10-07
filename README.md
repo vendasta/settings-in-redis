@@ -1,7 +1,8 @@
 # settings-in-redis
 
 This gem provides a `Settings` module that is written to be API-compatible
-with the ledermann-rails-settings gem for the management of global settings.
+with the v1.x ledermann-rails-settings gem for the management of global
+settings.
 
 The `Settings` module manages key-value pairs that are stored in Redis. Each
 setting is stored as a key with a string value in Redis. You can store any
@@ -83,3 +84,6 @@ For better performance, you can enable caching, e.g.:
 
     Settings.cache = ActiveSupport::Cache::MemoryStore.new
     Settings.cache_options = { :expires_in => 5.minutes }
+
+In our experience, this 5 minute caching was always necessary in a production
+Rails application where a setting may be used in every request.

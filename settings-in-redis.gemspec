@@ -9,6 +9,7 @@ Gem::Specification.new do |s|
   s.email       = ['engineering@yesware.com']
   s.summary     = %q{Global settings stored in Redis}
   s.description = %q{Ruby Gem that makes managing a table of key/value pairs easy. Think of it like a Hash stored in you database, that uses simple ActiveRecord like methods for manipulation.}
+  s.license     = 'MIT'
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
