@@ -63,6 +63,14 @@ describe Settings do
     end
   end
 
+  describe '.defaults=' do
+    it 'sets all defaults' do
+      Settings.defaults = HashWithIndifferentAccess.new(foo: 'one', bar: 'two')
+      expect(Settings.foo).to eq('one')
+      expect(Settings.bar).to eq('two')
+    end
+  end
+
   context 'set a setting' do
     context 'set using []' do
       it 'sets a setting using the [] syntax with a string' do
@@ -188,6 +196,10 @@ describe Settings do
     before(:each) do
       Settings.cache = ActiveSupport::Cache::MemoryStore.new
       Settings.cache_options = { :expires_in => 5.minutes }
+    end
+
+    after(:each) do
+      Settings.cache = nil
     end
 
     it 'stores values in cache' do

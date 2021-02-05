@@ -1,4 +1,6 @@
 require 'redis'
+require 'active_support/cache'
+require 'active_support/notifications'
 require 'active_support/core_ext/hash/indifferent_access'
 require 'yaml'
 
@@ -61,7 +63,11 @@ module Settings
   # get or set a variable with the variable as the called method
   def self.method_missing(method, *args)
     if self.respond_to?(method)
+      # :nocov: I can't figure out how this is reachable - if an object responds to a method, how
+      # would .method_missing be called? - so I can't cover it in testing.  I'm afraid to rip it
+      # out, though.
       super
+      # :nocov:
     else
       method_name = method.to_s
     
