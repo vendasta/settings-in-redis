@@ -11,7 +11,7 @@ describe Settings do
     it 'removes all settings from Redis' do
       Settings.hello = 'first'
       Settings.delete_all
-      Settings.all.should be_empty
+      expect(Settings.all).to be_empty
     end
   end
 
@@ -20,8 +20,9 @@ describe Settings do
       Settings.one = 1
       Settings.two = 2
 
-      Settings.all.should ==
+      expect(Settings.all).to eq(
           { 'one' => 1, 'two' => 2 }
+      )
     end
 
     context 'when starting_with is specified' do
@@ -29,8 +30,9 @@ describe Settings do
         Settings.test = 'foo'
         Settings['sub.one'] = 'bar'
         Settings['sub.two'] = 'baz'
-        Settings.all('sub').should ==
+        expect(Settings.all('sub')).to eq(
             { 'sub.one' => 'bar', 'sub.two' => 'baz' }
+        )
       end
     end
   end
@@ -42,24 +44,24 @@ describe Settings do
       end
 
       it 'returns the default for an unset Setting' do
-        Settings.foo.should == 'default foo'
+        expect(Settings.foo).to eq('default foo')
       end
 
       it 'does not return the default is set explicitly' do
         Settings.foo = 'bar'
         Settings.all
-        Settings.foo.should == 'bar'
+        expect(Settings.foo).to eq('bar')
       end
     end
 
     it 'supports a default of true' do
       Settings.defaults[:foo] = true
-      Settings.foo.should == true
+      expect(Settings.foo).to eq(true)
     end
 
     it 'supports a default of false' do
       Settings.defaults[:foo] = false
-      Settings.foo.should == false
+      expect(Settings.foo).to eq(false)
     end
   end
 
@@ -75,19 +77,19 @@ describe Settings do
     context 'set using []' do
       it 'sets a setting using the [] syntax with a string' do
         Settings['test2'] = 456
-        Settings.all['test2'].should == 456
+        expect(Settings.all['test2']).to eq(456)
       end
 
       it 'sets a setting using the [] syntax with a symbol' do
         Settings[:test2] = 'onetwothree'
-        Settings.all['test2'].should == 'onetwothree'
+        expect(Settings.all['test2']).to eq('onetwothree')
       end
     end
 
     context 'set using method' do
       it 'sets a setting using method missing' do
         Settings.test2 = 456
-        Settings.all['test2'].should == 456
+        expect(Settings.all['test2']).to eq(456)
       end
     end
 
@@ -98,7 +100,7 @@ describe Settings do
 
       it 'allows an existing setting to be updated' do
         Settings.test = 123
-        Settings.test.should == 123
+        expect(Settings.test).to eq(123)
       end
     end
 
@@ -106,7 +108,7 @@ describe Settings do
       it 'removes the setting' do
         Settings.remove_me = 'something'
         Settings.remove_me = nil
-        Settings.all.should == { 'remove_me' => nil }
+        expect(Settings.all).to eq({ 'remove_me' => nil })
       end
     end
 
@@ -114,15 +116,15 @@ describe Settings do
       it 'correctly serializes and deserializes complex values' do
         complex = [1, '2', {:three => true}]
         Settings.complex = complex
-        Settings.complex.should == complex
+        expect(Settings.complex).to eq(complex)
       end
     end
 
     context 'float serialization' do
       it 'correctly serializes and deserializes floats' do
         Settings.float = 0.01
-        Settings.float.should == 0.01
-        (2 * Settings.float).should == 0.02
+        expect(Settings.float).to eq(0.01)
+        expect(2 * Settings.float).to eq(0.02)
       end
     end
   end
@@ -131,25 +133,25 @@ describe Settings do
     context 'get using []' do
       it 'gets a setting value using the [] syntax with a string' do
         Settings.test = 'foo'
-        Settings['test'].should == 'foo'
+        expect(Settings['test']).to eq('foo')
       end
 
       it 'gets a setting value using the [] syntax with a symbol' do
         Settings.test = 'foo'
-        Settings['test'].should == 'foo'
+        expect(Settings['test']).to eq('foo')
       end
     end
 
     context 'get using method' do
       it 'gets a setting value using method missing' do
         Settings[:test] = 'foo'
-        Settings.test.should == 'foo'
+        expect(Settings.test).to eq('foo')
       end
     end
 
     context 'get a setting that does not exist' do
       it 'returns nil' do
-        Settings.does_not_exist.should be_nil
+        expect(Settings.does_not_exist).to be_nil
       end
     end
   end
@@ -159,12 +161,12 @@ describe Settings do
       # Note: [] must be used here
       Settings[:hash] = { :one => 1 }
       Settings.merge!(:hash, { :two => 2 })
-      Settings[:hash].should == { :one => 1, :two => 2 }
+      expect(Settings[:hash]).to eq({ :one => 1, :two => 2 })
     end
 
     it 'creates a new setting if it does not exist already' do
       Settings.merge!(:empty_hash, { :two => 2 })
-      Settings.empty_hash.should == { :two => 2 }
+      expect(Settings.empty_hash).to eq({ :two => 2 })
     end
 
     it 'raises an error if the value is not a Hash' do
@@ -187,8 +189,8 @@ describe Settings do
       Settings.test2 = 'bar'
       Settings.destroy('test')
       Settings.destroy(:test2)
-      Settings.test.should be_nil
-      Settings.test2.should be_nil
+      expect(Settings.test).to be_nil
+      expect(Settings.test2).to be_nil
     end
   end
 
@@ -206,9 +208,9 @@ describe Settings do
       Settings.progress = 'boing'
       # Explicitly remove from redis
       redis.del('settings:progress')
-      Settings.progress.should == 'boing'
+      expect(Settings.progress).to eq('boing')
       Settings.delete_all # also clears cache
-      Settings.progress.should be_nil
+      expect(Settings.progress).to be_nil
     end
   end
 end
