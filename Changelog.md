@@ -1,3 +1,14 @@
+### History of settings-in-redis
+
+
+Version 1.1.0 (2021-02-05)
+
+- Add support for `ConnectionPool`
+
+Version 1.0.0 (2013-10-17)
+
+- Initial release using Redis
+
 
 ### History of ledermann-rails-settings
 

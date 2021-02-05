@@ -1,9 +1,12 @@
+require 'simplecov'
+SimpleCov.start do
+  minimum_coverage 100
+end
+
 require 'rspec'
 require 'settings-in-redis'
 
 RSpec.configure do |config|
-  Settings.redis = Redis.new
-
   # Run specs in random order to surface order dependencies. If you find an
   # order dependency and want to debug it, you can fix the order by providing
   # the seed, which is printed after each run.

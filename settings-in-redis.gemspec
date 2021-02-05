@@ -18,10 +18,11 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'redis'
   s.add_runtime_dependency 'activesupport'
-  s.add_runtime_dependency 'i18n' # required by activesupport
+  s.add_runtime_dependency 'connection_pool'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'yard'
   s.add_development_dependency 'redcarpet'
+  s.add_development_dependency 'simplecov'
 end
