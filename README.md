@@ -19,6 +19,10 @@ initializer:
 
     Settings.redis = Redis.new
 
+Alternatively, a `ConnectionPool` can be used to share Redis connections among threads:
+
+    Settings.redis_pool = ConnectionPool.new { Redis.new }
+
 Setting values are stored in Redis with a default prefix of "settings:".
 
 ## Usage

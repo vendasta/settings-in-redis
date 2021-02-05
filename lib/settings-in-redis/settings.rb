@@ -3,6 +3,7 @@ require 'active_support/cache'
 require 'active_support/notifications'
 require 'active_support/core_ext/hash/indifferent_access'
 require 'yaml'
+require 'connection_pool'
 
 module Settings
   class NoRedisConnection < RuntimeError; end
@@ -11,9 +12,19 @@ module Settings
     @redis = server
   end
 
+  def self.redis_pool=(pool)
+    @redis_pool = pool
+  end
+
   def self.redis
-    raise NoRedisConnection unless @redis
-    @redis
+    raise NoRedisConnection unless @redis || @redis_pool
+    if @redis_pool
+      @redis_pool.with do |conn|
+        yield conn
+      end
+    else
+      yield @redis
+    end
   end
   private_class_method :redis
 
@@ -87,47 +98,57 @@ module Settings
   # destroy the specified setting
   def self.destroy(var_name)
     var_name = var_name.to_s
-    redis.del(redis_key(var_name))
+    redis do |redis_conn|
+      redis_conn.del(redis_key(var_name))
+    end
     cache.delete(cache_key(var_name))
   end
 
   def self.delete_all
     cache.clear
-    all_keys = redis.keys("#{redis_prefix}:*")
-    redis.del(all_keys) if all_keys.any?
+    redis do |redis_conn|
+      all_keys = redis_conn.keys("#{redis_prefix}:*")
+      redis_conn.del(all_keys) if all_keys.any?
+    end
   end
 
   # retrieve all settings as a hash
   # (optionally starting with a given namespace)
   def self.all(starting_with = nil)
     pattern = ["#{redis_prefix}:", starting_with, '*'].compact.join('')
-    all_keys = redis.keys(pattern)
-    if all_keys.any?
-      values = redis.mget(all_keys).map { |v| deserialize(v) }
-      prefix = Regexp.new("^#{redis_prefix}:")
-      setting_names = all_keys.map { |k| k.gsub(prefix, '')}
-      result = Hash[setting_names.zip(values)]
-      result.with_indifferent_access
-    else
-      HashWithIndifferentAccess.new
+    redis do |redis_conn|
+      all_keys = redis_conn.keys(pattern)
+      if all_keys.any?
+        values = redis_conn.mget(all_keys).map { |v| deserialize(v) }
+        prefix = Regexp.new("^#{redis_prefix}:")
+        setting_names = all_keys.map { |k| k.gsub(prefix, '')}
+        result = Hash[setting_names.zip(values)]
+        result.with_indifferent_access
+      else
+        HashWithIndifferentAccess.new
+      end
     end
   end
   
   # get a setting value by [] notation
   def self.[](var_name)
     cache.fetch(cache_key(var_name), cache_options) do
-      value = redis.get(redis_key(var_name))
-      if value.present?
-        deserialize(value)
-      else
-        defaults[var_name.to_s]
+      redis do |redis_conn|
+        value = redis_conn.get(redis_key(var_name))
+        if value.present?
+          deserialize(value)
+        else
+          defaults[var_name.to_s]
+        end
       end
     end
   end
   
   # set a setting value by [] notation
   def self.[]=(var_name, value)
-    redis.set(redis_key(var_name), serialize(value))
+    redis do |redis_conn|
+      redis_conn.set(redis_key(var_name), serialize(value))
+    end
     cache.write(cache_key(var_name), value, cache_options)
     value
   end
