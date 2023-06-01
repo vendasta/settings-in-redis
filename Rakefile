@@ -8,3 +8,6 @@ end
 
 task :default => :spec
 
+# All-in-one target for CI servers to run.
+task :ci => ['spec']
+
