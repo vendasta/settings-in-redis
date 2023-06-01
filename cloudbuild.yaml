@@ -30,6 +30,7 @@ steps:
     env:
       - 'RAILS_ENV=test'
       - 'CLOUDBUILD_PG=postgres-14-7'
+      - 'CLOUDBUILD_REDIS_URL=redis://redis-6-2:6379'
     script: |
       #!/usr/bin/env bash
       source /nvm/nvmrc
