@@ -220,7 +220,11 @@ describe Settings do
 
   context 'when using a redis connection directly' do
     before(:each) do
-      Settings.redis = Redis.new
+      if ENV['CLOUDBUILD_REDIS_URL']
+        Settings.redis = Redis.new(url: ENV['CLOUDBUILD_REDIS_URL'])
+      else
+        Settings.redis = Redis.new()
+      end
       Settings.redis_pool = nil
     end
 
@@ -229,7 +233,11 @@ describe Settings do
 
   context 'when using a redis connection pool' do
     before(:each) do
-      Settings.redis_pool = ConnectionPool.new { Redis.new }
+      if ENV['CLOUDBUILD_REDIS_URL']
+        Settings.redis_pool = ConnectionPool.new { Redis.new(url: ENV['CLOUDBUILD_REDIS_URL']) }
+      else
+        Settings.redis_pool = ConnectionPool.new { Redis.new }
+      end
       Settings.redis = nil
     end
 
