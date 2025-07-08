@@ -1,5 +1,8 @@
 ### History of settings-in-redis
 
+Version 1.3.0 (2025-07-08)
+- Update to Ruby 3.3
+
 Version 1.2.0 (2023-04-03)
 - Update to Ruby 3
 
