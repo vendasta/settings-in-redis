@@ -2,6 +2,9 @@ require 'redis'
 require 'active_support/cache'
 require 'active_support/notifications'
 require 'active_support/core_ext/hash/indifferent_access'
+require 'active_support/core_ext/object/blank'
+require 'active_support/time'
+require 'active_support/time_with_zone'
 require 'yaml'
 require 'connection_pool'
 
@@ -169,7 +172,11 @@ module Settings
 
   # decode YAML value
   def self.deserialize(value)
-    YAML::load(value)
+    YAML::safe_load(
+      value, permitted_classes: [
+        Symbol, Set, Date, Time, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone, ActiveSupport::Duration
+      ]
+    )
   end
   private_class_method :deserialize
   
