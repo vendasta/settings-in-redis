@@ -73,7 +73,7 @@ module Settings
   def self.redis_key(var_name)
     "#{redis_prefix}:#{var_name}"
   end
-  
+
   # get or set a variable with the variable as the called method
   def self.method_missing(method, *args)
     if self.respond_to?(method)
@@ -84,20 +84,18 @@ module Settings
       # :nocov:
     else
       method_name = method.to_s
-    
       # set a value for a variable
       if method_name =~ /=$/
         var_name = method_name.gsub('=', '')
         value = args.first
         self[var_name] = value
-    
       #retrieve a value
       else
         self[method_name]
       end
     end
   end
-  
+
   # destroy the specified setting
   def self.destroy(var_name)
     var_name = var_name.to_s
@@ -132,7 +130,7 @@ module Settings
       end
     end
   end
-  
+
   # get a setting value by [] notation
   def self.[](var_name)
     cache.fetch(cache_key(var_name), cache_options) do
@@ -146,7 +144,7 @@ module Settings
       end
     end
   end
-  
+
   # set a setting value by [] notation
   def self.[]=(var_name, value)
     redis do |redis_conn|
@@ -160,13 +158,13 @@ module Settings
   # @return [Hash]
   def self.merge!(var_name, hash_value)
     raise ArgumentError unless hash_value.is_a?(Hash)
-    
+
     old_value = self[var_name] || {}
     raise TypeError, "Existing value is not a hash, can't merge!" unless old_value.is_a?(Hash)
-    
+
     new_value = old_value.merge(hash_value)
     self[var_name] = new_value if new_value != old_value
-    
+
     new_value
   end
 
@@ -174,12 +172,12 @@ module Settings
   def self.deserialize(value)
     YAML::safe_load(
       value, permitted_classes: [
-        Symbol, Set, Date, Time, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone, ActiveSupport::Duration
+        Symbol, Set, Date, Time, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone, ActiveSupport::Duration, ActiveSupport::HashWithIndifferentAccess
       ]
     )
   end
   private_class_method :deserialize
-  
+
   # YAML encode value
   def self.serialize(value)
     value.to_yaml
