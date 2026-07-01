@@ -1,0 +1,6 @@
+services:
+  - name: settings-in-redis
+    owner: honey-badger
+    language: ruby
+    nonServiceType: library
+    description: "Fork of rails-settings to use Redis instead of a RDBMS."
